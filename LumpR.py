@@ -41,7 +41,9 @@ class LumpR(QComponent):
 
         parts = [sub_box, cpw_line, open_port_line,
                  open_termination, short_port_line]
+
         parts = draw.rotate(parts, p.orientation, origin=(0, 0))
+        parts = draw.translate(parts, 0, p.cpw_length-p.sub_height/2)
         parts = draw.translate(parts, p.pos_x, p.pos_y)
         [sub_box, cpw_line, open_port_line,
             open_termination, short_port_line] = parts
