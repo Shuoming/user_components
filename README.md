@@ -1,2 +1,2 @@
 # user_components
-personal metal components
+personal qiskit-metal user components
