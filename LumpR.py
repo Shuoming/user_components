@@ -2,6 +2,7 @@ from qiskit_metal import draw, Dict
 from qiskit_metal.qlibrary.core import QComponent
 import numpy as np
 
+
 class LumpR(QComponent):
     """Crossover pad for bridge by asm"""
     component_metadata = Dict(short_name='LR',
@@ -9,11 +10,15 @@ class LumpR(QComponent):
                               _qgeometry_table_path='True')
     """Component metadata"""
 
-    default_options = Dict(sub_width='100um',
-                           sub_height='100um',
+    default_options = Dict(sub_width='500um',
+                           sub_height='500um',
                            cpw_width='8um',
                            cpw_gap='4um',
-                           cpw_length='10um')
+                           cpw_length='10um',
+                           term_type='Open',  # or "Short"
+                           width='10um', gap='6um', termination_gap='6um',
+                           term_sub_gap='20um',
+                           )
     """Default connector options"""
 
     TOOLTIP = """."""
@@ -26,10 +31,20 @@ class LumpR(QComponent):
         cpw_line = draw.LineString([[0, p.sub_height/2],
                                     [0, p.sub_height/2+p.cpw_length]])
 
-        parts = [sub_box, cpw_line]
+        open_port_line = draw.translate(draw.LineString(
+            [(0, -p.width / 2), (0, p.width / 2)]), p.sub_width/2-p.term_sub_gap, -p.sub_height/2+p.term_sub_gap)
+        open_termination = draw.translate(draw.box(0, -(p.width / 2 + p.gap),
+                                                   p.termination_gap, (p.width / 2 + p.gap)), p.sub_width/2-p.term_sub_gap, -p.sub_height/2+p.term_sub_gap)
+
+        short_port_line = draw.translate(draw.LineString(
+            [(0, -p.width / 2), (0, p.width / 2)]), p.sub_width/2, -p.sub_height/2+p.term_sub_gap)
+
+        parts = [sub_box, cpw_line, open_port_line,
+                 open_termination, short_port_line]
         parts = draw.rotate(parts, p.orientation, origin=(0, 0))
         parts = draw.translate(parts, p.pos_x, p.pos_y)
-        [sub_box, cpw_line] = parts
+        [sub_box, cpw_line, open_port_line,
+            open_termination, short_port_line] = parts
 
         # Add to qgeometry tables
         self.add_qgeometry('path', {'cpw': cpw_line},
@@ -41,6 +56,10 @@ class LumpR(QComponent):
                            layer=p.layer)
         self.add_qgeometry(
             'poly', {'box': sub_box}, layer=p.layer, subtract=True)
+        if p.term_type == 'Open':
+            self.add_qgeometry('poly', {'open_to_ground': open_termination},
+                               subtract=True,
+                               layer=p.layer)
 
         # Add pins
         prime_pin_list = cpw_line.coords
@@ -50,6 +69,13 @@ class LumpR(QComponent):
                      width=p.cpw_width,
                      input_as_norm=True)
         self.add_pin('tie_2',
-                points=np.array(prime_pin_list[::-1]),
-                width=p.cpw_width,
-                input_as_norm=True)
+                     points=np.array(prime_pin_list[::-1]),
+                     width=p.cpw_width,
+                     input_as_norm=True)
+        if p.term_type == 'Open':
+            self.add_pin('open', open_port_line.coords, p.width)
+        elif p.term_type == 'Short':
+            self.add_pin('short', list(
+                draw.shapely.geometry.shape(short_port_line).coords), p.width)
+        else:
+            print('Wrong term typpes: "Open" or "Short"')
