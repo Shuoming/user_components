@@ -78,7 +78,8 @@ class LineTeeCS(QComponent):
             p.slit_width, p.ss_height), (p.sub_width+p.slit_width)/2, (p.prime_width/2+p.pad_distance-p.sgaptopad-p.slit_width+p.ss_height/2))
         slit_l = draw.translate(draw.rectangle(
             p.slit_width, p.ss_height), -(p.sub_width+p.slit_width)/2, (p.prime_width/2+p.pad_distance-p.sgaptopad-p.slit_width+p.ss_height/2))
-        slit_u = draw.union([slit, slit_r, slit_l])
+        # slit_u = draw.union([slit, slit_r, slit_l])
+        slit_u = slit
         # Pad
         pad = draw.translate(draw.rectangle(
             p.pad_width, p.pad_height), 0, p.pad_distance+p.pad_height/2+p.prime_width/2)
