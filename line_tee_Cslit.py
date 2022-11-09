@@ -19,13 +19,7 @@ import numpy as np
 
 
 class LineTeeCS(QComponent):
-    """Generates a two pin (+) structure comprised of a primary two pin CPW
-    transmission line, and a secondary one pin neighboring CPW transmission
-    line that is capacitively coupled to the primary. Such a structure can be
-    used, as an example, for generating CPW resonator hangars off of a
-    transmission line. (0,0) represents the center position of the component.
-
-    Inherits QComponent class.
+    """ Caution. Render for a narrow slit  make does not work.
 
     ::
 
