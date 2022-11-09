@@ -18,7 +18,7 @@ from qiskit_metal.qlibrary.core import QComponent
 import numpy as np
 
 
-class LineTeeC(QComponent):
+class LineTeeCS(QComponent):
     """Generates a two pin (+) structure comprised of a primary two pin CPW
     transmission line, and a secondary one pin neighboring CPW transmission
     line that is capacitively coupled to the primary. Such a structure can be
@@ -33,12 +33,6 @@ class LineTeeC(QComponent):
         +--------------------------+
                   ------
 
-    .. image::
-        LineTee.png
-
-    .. meta::
-        Line Tee C
-
     Options:
         * prime_width: '10um' -- The width of the trace of the two pin CPW transmission line
         * prime_gap: '6um' -- The dielectric gap of the two pin CPW transmission line
@@ -49,8 +43,8 @@ class LineTeeC(QComponent):
     component_metadata = Dict(short_name='cpw', _qgeometry_table_path='True')
     """Component metadata"""
 
-    #Currently setting the primary CPW length based on the coupling_length
-    #May want it to be it's own value that the user can control?
+    # Currently setting the primary CPW length based on the coupling_length
+    # May want it to be it's own value that the user can control?
     default_options = Dict(prime_width='10um',
                            prime_gap='6um',
                            t_length='50um',
@@ -59,6 +53,9 @@ class LineTeeC(QComponent):
                            pad_distance='10um',
                            sub_width='30um',
                            sub_height='20um',
+                           slit_width='1um',
+                           sgaptopad='1um',
+                           ss_height='30um',
                            )
     """Default connector options"""
 
@@ -71,21 +68,31 @@ class LineTeeC(QComponent):
         p = self.p
         prime_cpw_length = p.t_length * 2
 
-        #Primary CPW
+        # Primary CPW
         prime_cpw = draw.LineString([[-prime_cpw_length / 2, 0],
                                      [prime_cpw_length / 2, 0]])
-        #Pad
-        pad = draw.translate(draw.rectangle(p.pad_width,p.pad_height),0,p.pad_distance+p.pad_height/2+p.prime_width/2)
-        #Sub
-        sub = draw.translate(draw.rectangle(p.sub_width,p.sub_height),0,p.prime_gap+p.prime_width/2+p.sub_height/2)
+        # slit
+        slit = draw.translate(draw.rectangle(
+            p.sub_width, p.slit_width), 0, -(p.prime_width/2+p.pad_distance-p.sgaptopad-p.slit_width/2))
+        slit_r = draw.translate(draw.rectangle(
+            p.slit_width, p.ss_height), (p.sub_width+p.p.slit_width)/2, -(p.prime_width/2+p.pad_distance-p.sgaptopad-p.slit_width+p.ss_height/2))
+        slit_l = draw.translate(draw.rectangle(
+            p.slit_width, p.ss_height), -(p.sub_width+p.p.slit_width)/2, -(p.prime_width/2+p.pad_distance-p.sgaptopad-p.slit_width+p.ss_height/2))
+        slit_u = draw.union(slit, slit_r, slit_l)
+        # Pad
+        pad = draw.translate(draw.rectangle(
+            p.pad_width, p.pad_height), 0, p.pad_distance+p.pad_height/2+p.prime_width/2)
+        # Sub
+        sub = draw.translate(draw.rectangle(
+            p.sub_width, p.sub_height), 0, p.prime_gap+p.prime_width/2+p.sub_height/2)
 
         #Rotate and Translate
-        c_items = [prime_cpw, pad, sub]
+        c_items = [prime_cpw, pad, sub, slit_u]
         c_items = draw.rotate(c_items, p.orientation, origin=(0, 0))
         c_items = draw.translate(c_items, p.pos_x, p.pos_y)
-        [prime_cpw, pad, sub] = c_items
+        [prime_cpw, pad, sub, slit_u] = c_items
 
-        #Add to qgeometry tables
+        # Add to qgeometry tables
         self.add_qgeometry('path', {'prime_cpw': prime_cpw},
                            width=p.prime_width,
                            layer=p.layer)
@@ -93,13 +100,15 @@ class LineTeeC(QComponent):
                            width=p.prime_width + 2 * p.prime_gap,
                            subtract=True,
                            layer=p.layer)
+        self.add_qgeometry('poly', {'slit_u': slit_u},
+                           layer=p.layer)
         self.add_qgeometry('poly', {'pad': pad},
                            layer=p.layer)
         self.add_qgeometry('poly', {'sub': sub},
                            subtract=True,
                            layer=p.layer)
 
-        #Add pins
+        # Add pins
         prime_pin_list = prime_cpw.coords
 
         self.add_pin('prime_start',
