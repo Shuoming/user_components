@@ -87,7 +87,7 @@ class TransmonCrossBetterI(BaseQubit):  # pylint: disable=invalid-name
 
     TOOLTIP = """Simple Metal Transmon Cross."""
 
-    ##############################################MAKE######################################################
+    ############################################## MAKE######################################################
 
     def make(self):
         """This is executed by the GUI/user to generate the qgeometry for the
@@ -95,7 +95,7 @@ class TransmonCrossBetterI(BaseQubit):  # pylint: disable=invalid-name
         self.make_pocket()
         self.make_connection_pads()
 
-###################################TRANSMON#############################################################
+################################### TRANSMON#############################################################
 
     def make_pocket(self):
         """Makes a basic Crossmon, 4 arm cross."""
@@ -154,10 +154,8 @@ class TransmonCrossBetterI(BaseQubit):  # pylint: disable=invalid-name
         cross_etch_6 = subtract(cross_etch_5, t6)
         cross_etch = cross_etch_6
         # The junction/SQUID
-        #rect_jj = draw.rectangle(cross_width, cross_gap)
-        #rect_jj = draw.translate(rect_jj, 0, -cross_length-cross_gap/2)
-        rect_jj = draw.LineString([(0, -cross_length/tr),
-                                   (0, -cross_length/tr - cross_gap)])
+        rect_jj = draw.LineString([(0, -cross_width/2),
+                                   (0, -cross_width/2 - cross_gap)])
 
         #rotate and translate
         if not np:
@@ -187,7 +185,8 @@ class TransmonCrossBetterI(BaseQubit):  # pylint: disable=invalid-name
                            chip=chip)
 
 
-############################CONNECTORS##################################################################################################
+############################ CONNECTORS##################################################################################################
+
 
     def make_connection_pads(self):
         """Goes through connector pads and makes each one."""

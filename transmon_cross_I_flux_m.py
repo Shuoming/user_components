@@ -94,14 +94,12 @@ class TransmonCrossIFLM(TransmonCrossBetterI):  # pylint: disable=invalid-name
         connect_line = draw.LineString(
             [(float(pf.t_l_h / 2 + pf.t_gap_v / 2), -pf.t_width_h/2), (pf.t_l_h / 2 + pf.t_gap_v / 2, pf.t_width_h/2+pf.t_gap_h)])
         parts = [h_line, v_line, top_line, connect_line]
-        # [h_line, v_line, connect_line] = draw.translate(
-        #     parts, pf.t_offset, 0, 0)
         parts = draw.translate(
-            parts, pf.t_offset, (p.tr-1)/p.tr*p.cross_length, 0)
+            parts, pf.t_offset, 0)
 
         # Move the flux line down to the SQUID
         parts = draw.translate(
-            parts, 0, -(p.cross_length + p.cross_gap + pf.t_inductive_gap +
+            parts, 0, -(p.cross_width/2 + p.cross_gap + pf.t_inductive_gap +
                         pf.t_width_h / 2 + pf.t_gap_h))
 
         # Rotate and translate based on crossmon location
