@@ -109,9 +109,9 @@ class TransmonPocketTeethR(BaseQubit):
         cl_pocket_edge='0',
         cl_off_center='50um',  # distance from the center axis the qubit pocket is built on
         _default_connection_pads=Dict(
-            round_tip = True,
-            pad_gap ='15um',
-            pad_width ='20um',
+            round_tip=True,
+            pad_gap='15um',
+            pad_width='20um',
             pad_height='150um',
             pad_cpw_shift='0um',
             pad_cpw_extent='25um',
@@ -143,9 +143,11 @@ class TransmonPocketTeethR(BaseQubit):
         qcomponent.add_qgeometry(...), adding in extra needed
         information, such as layer, subtract, etc.
         """
+        p = self.p
         self.make_pocket()
         self.make_connection_pads()
-        self.make_charge_line()
+        if p.make_CL:
+            self.make_charge_line()
 
     def make_pocket(self):
         """Makes standard transmon in a pocket."""

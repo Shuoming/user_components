@@ -17,7 +17,7 @@ from qiskit_metal.qlibrary.core import QComponent
 import numpy as np
 
 
-class CoupledLineTeexyflip(QComponent):
+class CoupledCPW(QComponent):
     """Generates a three pin (+) structure comprised of a primary two pin CPW
     transmission line, and a secondary one pin neighboring CPW transmission
     line that is capacitively/inductively coupled to the primary. Such a
@@ -64,16 +64,15 @@ class CoupledLineTeexyflip(QComponent):
     # May want it to be it's own value that the user can control?
     default_options = Dict(prime_width='10um',
                            prime_gap='6um',
-                           pcratio=3,
                            second_width='10um',
                            second_gap='6um',
                            coupling_space='3um',
                            coupling_length='100um',
-                           down_length='100um',
-                           fillet='25um',
-                           mirrorx=False,
-                           mirrory=False,
-                           open_termination=True)
+                           pr_open_termination=True,
+                           pl_open_termination=False,
+                           sr_open_termination=True,
+                           sl_open_termination=False,
+                           )
     """Default connector options"""
 
     TOOLTIP = """Generates a three pin (+)
@@ -88,63 +87,54 @@ class CoupledLineTeexyflip(QComponent):
         """Build the component."""
         p = self.p
 
-        prime_cpw_length = p.coupling_length * p.pcratio
-        second_flipx = 1
-        second_flipy = 1
-        if p.mirrorx:
-            second_flipx = -1
-        if p.mirrory:
-            second_flipy = -1
+        l = p.coupling_length
 
         # Primary CPW
-        prime_cpw = draw.LineString([[-prime_cpw_length / 2, 0],
-                                     [prime_cpw_length / 2, 0]])
+        prime_cpw = draw.LineString([[-l / 2, 0],
+                                     [l / 2, 0]])
+        if p.pr_open_termination:
+            prime_cpw_etch = draw.LineString([[-l / 2, 0],
+                                              [l / 2+p.prime_width, 0]])
+        elif p.pl_open_termination:
+            prime_cpw_etch = draw.LineString([[-l / 2-p.prime_width, 0],
+                                              [l / 2, 0]])
+        else:
+            prime_cpw_etch = draw.LineString([[-l / 2, 0],
+                                              [l / 2, 0]])
 
         # Secondary CPW
-        second_down_length = p.down_length
-        second_y = -p.prime_width / 2 - p.prime_gap - \
-            p.coupling_space - p.second_gap - p.second_width / 2
-        second_cpw = draw.LineString(
-            [[second_flipy * (-p.coupling_length / 2), second_flipx * second_y],
-             [second_flipy * (p.coupling_length / 2), second_flipx * second_y],
-             [
-                 second_flipy * (p.coupling_length / 2),
-                 second_flipx * (second_y - second_down_length)
-            ]])
-
-        second_termination = 1
-        if p.open_termination:
-            second_termination = p.second_gap
-
-        second_cpw_etch = draw.LineString(
-            [[
-                second_flipy * (-p.coupling_length / 2 - second_termination),
-                second_flipx * second_y
-            ], [second_flipy * (p.coupling_length / 2), second_flipx * second_y],
-                [
-                second_flipy * (p.coupling_length / 2),
-                second_flipx * (second_y - second_down_length)
-            ]])
-
+        second_cpw = draw.LineString([[-l / 2, 0],
+                                     [l / 2, 0]])
+        if p.sr_open_termination:
+            second_cpw_etch = draw.LineString([[-l / 2, 0],
+                                              [l / 2+p.second_width, 0]])
+        elif p.sl_open_termination:
+            second_cpw_etch = draw.LineString([[-l / 2-p.second_width, 0],
+                                              [l / 2, 0]])
+        else:
+            second_cpw_etch = draw.LineString([[-l / 2, 0],
+                                              [l / 2, 0]])
+        sc_temp = [second_cpw, second_cpw_etch]
+        sc_temp = draw.translate(
+            sc_temp, 0, -(p.prime_width/2+p.prime_gap+p.coupling_space+p.second_gap+p.second_width/2))  # type: ignore
+        [second_cpw, second_cpw_etch] = sc_temp
         #Rotate and Translate
-        c_items = [prime_cpw, second_cpw, second_cpw_etch]
+        c_items = [prime_cpw, prime_cpw_etch, second_cpw, second_cpw_etch]
         c_items = draw.rotate(c_items, p.orientation, origin=(0, 0))
         c_items = draw.translate(c_items, p.pos_x, p.pos_y)
-        [prime_cpw, second_cpw, second_cpw_etch] = c_items
+        [prime_cpw, prime_cpw_etch, second_cpw, second_cpw_etch] = c_items
 
         # Add to qgeometry tables
         self.add_qgeometry('path', {'prime_cpw': prime_cpw},
                            width=p.prime_width)
-        self.add_qgeometry('path', {'prime_cpw_sub': prime_cpw},
+        self.add_qgeometry('path', {'prime_cpw_sub': prime_cpw_etch},
                            width=p.prime_width + 2 * p.prime_gap,
                            subtract=True)
         self.add_qgeometry('path', {'second_cpw': second_cpw},
-                           width=p.second_width,
-                           fillet=p.fillet)
+                           width=p.second_width)
         self.add_qgeometry('path', {'second_cpw_sub': second_cpw_etch},
                            width=p.second_width + 2 * p.second_gap,
-                           subtract=True,
-                           fillet=p.fillet)
+                           subtract=True)
 
         # Add pins
         prime_pin_list = prime_cpw.coords
@@ -158,7 +148,11 @@ class CoupledLineTeexyflip(QComponent):
                      points=np.array(prime_pin_list),
                      width=p.prime_width,
                      input_as_norm=True)
+        self.add_pin('second_start',
+                     points=np.array(second_pin_list[::-1]),
+                     width=p.prime_width,
+                     input_as_norm=True)
         self.add_pin('second_end',
-                     points=np.array(second_pin_list[1:]),
-                     width=p.second_width,
+                     points=np.array(second_pin_list),
+                     width=p.prime_width,
                      input_as_norm=True)
