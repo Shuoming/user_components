@@ -112,7 +112,7 @@ class CoupledLineTeexyflip(QComponent):
                  second_flipx * (second_y - second_down_length)
             ]])
 
-        second_termination = 1
+        second_termination = 0
         if p.open_termination:
             second_termination = p.second_gap
 
