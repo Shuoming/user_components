@@ -301,17 +301,14 @@ class TransmonPocketTeethR(BaseQubit):
         if float(loc_W) != 0:
             connector_pad = draw.rectangle(pad_width, pad_height,
                                            -pad_width / 2, pad_height / 2)
-            if pc.round_tip == True:
-                connector_pad_tip = draw.Point(0., 0 /
-                                               2).buffer(pad_width / 2,
-                                                         resolution=16,
-                                                         cap_style=CAP_STYLE.round)
+            connector_pad_tip = draw.Point(0., 0 /
+                                           2).buffer(pad_width / 2,
+                                                     resolution=16,
+                                                     cap_style=CAP_STYLE.round)
+            if pc.round_tip:
+                connector_pad = draw.union(connector_pad, connector_pad_tip)
             else:
-                connector_pad_tip = draw.Point(0., 0 /
-                                               2).buffer(0. / 2,
-                                                         resolution=16,
-                                                         cap_style=CAP_STYLE.round)
-            connector_pad = draw.union(connector_pad, connector_pad_tip)
+                connector_pad = connector_pad
 
             # Connector CPW wire
             connector_wire_path = draw.wkt.loads(f"""LINESTRING (\
@@ -327,7 +324,10 @@ class TransmonPocketTeethR(BaseQubit):
                                            2).buffer(pad_width / 2,
                                                      resolution=16,
                                                      cap_style=CAP_STYLE.round)
-            connector_pad = draw.union(connector_pad, connector_pad_tip)
+            if pc.round_tip:
+                connector_pad = draw.union(connector_pad, connector_pad_tip)
+            else:
+                connector_pad = connector_pad
 
             connector_wire_path = draw.LineString(
                 [[0, pad_height],
