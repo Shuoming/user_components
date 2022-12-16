@@ -105,12 +105,15 @@ class CoupledCPW(QComponent):
         # Secondary CPW
         second_cpw = draw.LineString([[-l / 2, 0],
                                      [l / 2, 0]])
-        if p.sr_open_termination:
+        if p.sr_open_termination and not p.sl_open_termination:
             second_cpw_etch = draw.LineString([[-l / 2, 0],
                                               [l / 2+p.second_width, 0]])
-        elif p.sl_open_termination:
+        elif not p.sr_open_termination and p.sl_open_termination:
             second_cpw_etch = draw.LineString([[-l / 2-p.second_width, 0],
                                               [l / 2, 0]])
+        elif p.sr_open_termination and p.sl_open_termination:
+            second_cpw_etch = draw.LineString([[-l / 2-p.second_width, 0],
+                                              [l / 2+p.second_width, 0]])
         else:
             second_cpw_etch = draw.LineString([[-l / 2, 0],
                                               [l / 2, 0]])
