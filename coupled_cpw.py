@@ -92,12 +92,15 @@ class CoupledCPW(QComponent):
         # Primary CPW
         prime_cpw = draw.LineString([[-l / 2, 0],
                                      [l / 2, 0]])
-        if p.pr_open_termination:
+        if p.pr_open_termination and not p.pl_open_termination:
             prime_cpw_etch = draw.LineString([[-l / 2, 0],
                                               [l / 2+p.prime_width, 0]])
-        elif p.pl_open_termination:
+        elif not p.pr_open_termination and p.pl_open_termination:
             prime_cpw_etch = draw.LineString([[-l / 2-p.prime_width, 0],
                                               [l / 2, 0]])
+        elif p.pr_open_termination and p.pl_open_termination:
+            prime_cpw_etch = draw.LineString([[-l / 2-p.prime_width, 0],
+                                              [l / 2+p.prime_width, 0]])
         else:
             prime_cpw_etch = draw.LineString([[-l / 2, 0],
                                               [l / 2, 0]])
